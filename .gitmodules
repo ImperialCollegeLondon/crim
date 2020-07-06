@@ -1,0 +1,3 @@
+[submodule "gun_shootings_multicity"]
+	path = gun_shootings_multicity
+	url = https://github.com/alexeyknorre/gun_shootings_multicity
