@@ -11,10 +11,85 @@ knitr::opts_chunk$set(echo = TRUE)
 
 This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
-Washington DC: incidents Data 2016 -2018
 
 ```{r}
+getwd()
+library(here)
+```
+Load the oackages used for bandwidth selection
+```{r}
+library(spatstat)
+library (sp)
+```
 
+Washington DC: incidents Data 2016 -2018
+First loading the data
+```{r}
+data_WDC <- readRDS(here("gun_shootings_multicity/data/ready_for_modeling/washington_incidents_2016-2018_with_holidays.rds"))
+```
+
+We start with looking at different methods that estimate the bandwidth for times.
+We use the default Gaussian Kernel, estimate the density at 1024 points.
+
+```{r}
+times_WDC <- data.matrix(data_WDC[3:3])
+
+#NRD0
+WDC_time_est1 <- density (times_WDC, n =1024)
+WDC_time_est1$bw
+plot(WDC_time_est1, col = "slateblue1", lwd = 1.5, ylim = c(0, 6*10^(-5)), main = "Kernel Density Estimation", xlab = "Observation" )
+
+#NRD
+WDC_time_est2 <- density (times_WDC, bw = "nrd",n =1024)
+WDC_time_est2$bw
+lines(WDC_time_est2, col = "violet", lwd = 1.5 )
+
+#UCV
+WDC_time_est3 <- density (times_WDC, bw = "ucv",n =1024)
+WDC_time_est3$bw
+lines(WDC_time_est3, col = "steelblue1", lwd = 1.5 )
+
+#BCV
+WDC_time_est4 <- density (times_WDC, bw = "bcv",n =1024)
+WDC_time_est4$bw
+lines(WDC_time_est4, col ="royalblue3", lwd = 1.5 )
+
+#SJ
+WDC_time_est5 <- density (times_WDC, bw = "SJ",n =1024)
+WDC_time_est5$bw
+lines(WDC_time_est5, col = "orchid", lwd = 1.5 )
+
+legend(-5000, 5.5*10^(-5), legend = c("NRD0", "NRD", "UCV", "BCV", "SJ"), col = c("slateblue1", "violet", "steelblue1", "royalblue3","orchid"), lty = 1, cex = 0.75)
+
+
+```
+
+We now continue by looking at different methods that estimate the bandwidth for the spatial locations. 
+
+```{r}
+X_min_WDC <- min(data_WDC$X)
+X_max_WDC <- max(data_WDC$X)
+Y_min_WDC <- min(data_WDC$Y)
+Y_max_WDC <- max(data_WDC$Y)
+
+loc_WDC <- SpatialPoints(cbind(data_WDC$X, data_WDC$Y))
+loc_WDC_ppp <- as.ppp(as.data.frame(loc_WDC), c(X_min_WDC, X_max_WDC, Y_min_WDC, Y_max_WDC))
+
+#Diggle
+WDC_loc_est1 <- bw.diggle(loc_WDC_ppp)
+WDC_loc_est1
+
+#ppl
+WDC_loc_est2 <- bw.ppl(loc_WDC_ppp)
+WDC_loc_est2
+
+#scott
+WDC_loc_est3 <- bw.scott(loc_WDC_ppp)
+WDC_loc_est3
+
+#CvL
+WDC_loc_est4 <- bw.CvL(loc_WDC_ppp)
+WDC_loc_est4
 ```
 
 
