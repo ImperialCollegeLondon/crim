@@ -11,10 +11,414 @@ knitr::opts_chunk$set(echo = TRUE)
 
 This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
-Washington DC: incidents Data 2016 -2018
 
 ```{r}
+getwd()
+library(here)
+```
+Load the oackages used for bandwidth selection
+```{r}
+library(spatstat)
+library(spatstat.data)
+library(nlme)
+library(rpart)
+library (sp)
+```
+
+In the whole document, we use the data with holidays as it has been noticed that the surges in holidays mostly occured in AGLS data (fireworks, celebratory gunshots) rather than corresponding to an actual higher number of assaults. 
+
+**Washington DC: incidents Data 2016 -2018**
+First loading the data
+```{r}
+data_WDC <- readRDS(here("gun_shootings_multicity/data/ready_for_modeling/washington_incidents_2016-2018_with_holidays.rds"))
+```
+
+We start with looking at different methods that estimate the bandwidth for times.
+We use the default Gaussian Kernel, estimate the density at 1024 points.
+
+```{r}
+times_WDC <- data.matrix(data_WDC$Time)
+
+#NRD0
+WDC_time_est1 <- density (times_WDC, n =1024)
+WDC_time_est1$bw
+plot(WDC_time_est1, col = "slateblue1", lwd = 1.5, ylim = c(0, 6*10^(-5)), main = "Kernel Density Estimation- Washington DC", xlab = "Observation" )
+
+#NRD
+WDC_time_est2 <- density (times_WDC, bw = "nrd",n =1024)
+WDC_time_est2$bw
+lines(WDC_time_est2, col = "violet", lwd = 1.5 )
+
+#UCV
+WDC_time_est3 <- density (times_WDC, bw = "ucv",n =1024)
+WDC_time_est3$bw
+lines(WDC_time_est3, col = "steelblue1", lwd = 1.5 )
+
+#BCV
+WDC_time_est4 <- density (times_WDC, bw = "bcv",n =1024)
+WDC_time_est4$bw
+lines(WDC_time_est4, col ="royalblue3", lwd = 1.5 )
+
+#SJ
+WDC_time_est5 <- density (times_WDC, bw = "SJ",n =1024)
+WDC_time_est5$bw
+lines(WDC_time_est5, col = "orchid", lwd = 1.5 )
+
+legend(-5000, 5.5*10^(-5), legend = c("NRD0", "NRD", "UCV", "BCV", "SJ"), col = c("slateblue1", "violet", "steelblue1", "royalblue3","orchid"), lty = 1, cex = 0.75)
+
 
 ```
 
+We now continue by looking at different methods that estimate the bandwidth for the spatial locations. 
+
+```{r}
+X_min_WDC <- min(data_WDC$X)
+X_max_WDC <- max(data_WDC$X)
+Y_min_WDC <- min(data_WDC$Y)
+Y_max_WDC <- max(data_WDC$Y)
+
+loc_WDC <- SpatialPoints(cbind(data_WDC$X, data_WDC$Y))
+loc_WDC_ppp <- as.ppp(as.data.frame(loc_WDC), c(X_min_WDC, X_max_WDC, Y_min_WDC, Y_max_WDC))
+
+#Diggle
+WDC_loc_est1 <- bw.diggle(loc_WDC_ppp)
+WDC_loc_est1
+
+#ppl
+WDC_loc_est2 <- bw.ppl(loc_WDC_ppp)
+WDC_loc_est2
+
+#scott
+WDC_loc_est3 <- bw.scott(loc_WDC_ppp)
+WDC_loc_est3
+
+#CvL
+WDC_loc_est4 <- bw.CvL(loc_WDC_ppp)
+WDC_loc_est4
+```
+
+**Chicago: incidents data 2016-2018**
+
+```{r}
+data_CHI <- readRDS(here("gun_shootings_multicity/data/ready_for_modeling/chicago_incidents_2016-2018_with_holidays.rds"))
+```
+
+We now look at the estimates for time:
+```{r}
+times_CHI <- data.matrix(data_CHI$Time)
+
+#NRD0
+CHI_time_est1 <- density (times_CHI, n =1024)
+CHI_time_est1$bw
+plot(CHI_time_est1, col = "slateblue1", lwd = 1.5, ylim = c(0, 6*10^(-5)), main = "Kernel Density Estimation- Chicago", xlab = "Observation" )
+
+#NRD
+CHI_time_est2 <- density (times_CHI, bw = "nrd",n =1024)
+CHI_time_est2$bw
+lines(CHI_time_est2, col = "violet", lwd = 1.5 )
+
+#UCV
+CHI_time_est3 <- density (times_CHI, bw = "ucv",n =1024)
+CHI_time_est3$bw
+lines(CHI_time_est3, col = "steelblue1", lwd = 1.5 )
+
+#BCV
+CHI_time_est4 <- density (times_CHI, bw = "bcv",n =1024)
+CHI_time_est4$bw
+lines(CHI_time_est4, col ="royalblue3", lwd = 1.5 )
+
+#SJ
+CHI_time_est5 <- density (times_CHI, bw = "SJ",n =1024)
+CHI_time_est5$bw
+lines(CHI_time_est5, col = "orchid", lwd = 1.5 )
+
+legend(-4000, 5.8*10^(-5), legend = c("NRD0", "NRD", "UCV", "BCV", "SJ"), col = c("slateblue1", "violet", "steelblue1", "royalblue3","orchid"), lty = 1, cex = 0.75)
+
+```
+
+We now continue by looking at different methods that estimate the bandwidth for the spatial locations. 
+```{r}
+X_min_CHI <- min(data_CHI$X)
+X_max_CHI <- max(data_CHI$X)
+Y_min_CHI <- min(data_CHI$Y)
+Y_max_CHI <- max(data_CHI$Y)
+
+loc_CHI <- SpatialPoints(cbind(data_CHI$X, data_CHI$Y))
+loc_CHI_ppp <- as.ppp(as.data.frame(loc_CHI), c(X_min_CHI, X_max_CHI, Y_min_CHI, Y_max_CHI))
+
+#Diggle
+CHI_loc_est1 <- bw.diggle(loc_CHI_ppp)
+CHI_loc_est1
+
+#ppl
+CHI_loc_est2 <- bw.ppl(loc_CHI_ppp)
+CHI_loc_est2
+
+#scott
+CHI_loc_est3 <- bw.scott(loc_CHI_ppp)
+CHI_loc_est3
+
+#CvL
+CHI_loc_est4 <- bw.CvL(loc_CHI_ppp)
+CHI_loc_est4
+```
+
+**Los Angeles: incidents date 2016- 2018**
+
+```{r}
+data_LA <- readRDS(here("gun_shootings_multicity/data/ready_for_modeling/losangeles_incidents_2016-2018_with_holidays.rds"))
+```
+
+We compute the bandwidth estimates for time :
+```{r}
+times_LA <- data.matrix(data_LA$Time)
+
+#NRD0
+LA_time_est1 <- density (times_LA, n =1024)
+LA_time_est1$bw
+plot(LA_time_est1, col = "slateblue1", lwd = 1.5, ylim = c(0, 6*10^(-5)), main = "Kernel Density Estimation- Los Angeles", xlab = "Observation" )
+
+#NRD
+LA_time_est2 <- density (times_LA, bw = "nrd",n =1024)
+LA_time_est2$bw
+lines(LA_time_est2, col = "violet", lwd = 1.5 )
+
+#UCV
+LA_time_est3 <- density (times_LA, bw = "ucv",n =1024)
+LA_time_est3$bw
+lines(LA_time_est3, col = "steelblue1", lwd = 1.5 )
+
+#BCV
+LA_time_est4 <- density (times_LA, bw = "bcv",n =1024)
+LA_time_est4$bw
+lines(LA_time_est4, col ="royalblue3", lwd = 1.5 )
+
+#SJ
+LA_time_est5 <- density (times_LA, bw = "SJ",n =1024)
+LA_time_est5$bw
+lines(LA_time_est5, col = "orchid", lwd = 1.5 )
+
+legend(-4000, 5.8*10^(-5), legend = c("NRD0", "NRD", "UCV", "BCV", "SJ"), col = c("slateblue1", "violet", "steelblue1", "royalblue3","orchid"), lty = 1, cex = 0.75)
+```
+
+And now the bandwidth estimations for the locations: 
+```{r}
+X_min_LA <- min(data_LA$X)
+X_max_LA <- max(data_LA$X)
+Y_min_LA <- min(data_LA$Y)
+Y_max_LA <- max(data_LA$Y)
+
+loc_LA <- SpatialPoints(cbind(data_LA$X, data_LA$Y))
+loc_LA_ppp <- as.ppp(as.data.frame(loc_LA), c(X_min_LA, X_max_LA, Y_min_LA, Y_max_LA))
+
+#Diggle
+LA_loc_est1 <- bw.diggle(loc_LA_ppp)
+LA_loc_est1
+
+#ppl
+LA_loc_est2 <- bw.ppl(loc_LA_ppp)
+LA_loc_est2
+
+#scott
+LA_loc_est3 <- bw.scott(loc_LA_ppp)
+LA_loc_est3
+
+#CvL
+LA_loc_est4 <- bw.CvL(loc_LA_ppp)
+LA_loc_est4
+```
+
+**New York City : incidents data 2016- 2018**
+
+```{r}
+data_NYC <- readRDS(here("gun_shootings_multicity/data/ready_for_modeling/nyc_incidents_2016-2018_with_holidays.rds"))
+```
+
+Bandwidth estimates for times :
+```{r}
+times_NYC <- data.matrix(data_NYC$Time)
+
+#NRD0
+NYC_time_est1 <- density (times_NYC, n =1024)
+NYC_time_est1$bw
+plot(NYC_time_est1, col = "slateblue1", lwd = 1.5, ylim = c(0, 6*10^(-5)), main = "Kernel Density Estimation- New York City", xlab = "Observation" )
+
+#NRD
+NYC_time_est2 <- density (times_NYC, bw = "nrd",n =1024)
+NYC_time_est2$bw
+lines(NYC_time_est2, col = "violet", lwd = 1.5 )
+
+#UCV
+NYC_time_est3 <- density (times_NYC, bw = "ucv",n =1024)
+NYC_time_est3$bw
+lines(NYC_time_est3, col = "steelblue1", lwd = 1.5 )
+
+#BCV
+NYC_time_est4 <- density (times_NYC, bw = "bcv",n =1024)
+NYC_time_est4$bw
+lines(NYC_time_est4, col ="royalblue3", lwd = 1.5 )
+
+#SJ
+NYC_time_est5 <- density (times_NYC, bw = "SJ",n =1024)
+NYC_time_est5$bw
+lines(NYC_time_est5, col = "orchid", lwd = 1.5 )
+
+legend(-4000, 5.8*10^(-5), legend = c("NRD0", "NRD", "UCV", "BCV", "SJ"), col = c("slateblue1", "violet", "steelblue1", "royalblue3","orchid"), lty = 1, cex = 0.75)
+```
+The bandwidth for locations:
+```{r}
+X_min_NYC <- min(data_NYC$X)
+X_max_NYC <- max(data_NYC$X)
+Y_min_NYC <- min(data_NYC$Y)
+Y_max_NYC <- max(data_NYC$Y)
+
+loc_NYC <- SpatialPoints(cbind(data_NYC$X, data_NYC$Y))
+loc_NYC_ppp <- as.ppp(as.data.frame(loc_NYC), c(X_min_NYC, X_max_NYC, Y_min_NYC, Y_max_NYC))
+
+#Diggle
+NYC_loc_est1 <- bw.diggle(loc_NYC_ppp)
+NYC_loc_est1
+
+#ppl
+NYC_loc_est2 <- bw.ppl(loc_NYC_ppp)
+NYC_loc_est2
+
+#scott
+NYC_loc_est3 <- bw.scott(loc_NYC_ppp)
+NYC_loc_est3
+
+#CvL
+NYC_loc_est4 <- bw.CvL(loc_NYC_ppp)
+NYC_loc_est4
+```
+
+**Philadelphia: incidents data 2016- 2018**
+```{r}
+data_PHILLY <- readRDS(here("gun_shootings_multicity/data/ready_for_modeling/philadelphia_incidents_2016-2018_with_holidays.rds"))
+```
+
+Bandwidth estimates for times:
+```{r}
+times_PHILLY <- data.matrix(data_PHILLY$Time)
+
+#NRD0
+PHILLY_time_est1 <- density (times_PHILLY, n =1024)
+PHILLY_time_est1$bw
+plot(PHILLY_time_est1, col = "slateblue1", lwd = 1.5, ylim = c(0, 6*10^(-5)), main = "Kernel Density Estimation- Philadelphia", xlab = "Observation" )
+
+#NRD
+PHILLY_time_est2 <- density (times_PHILLY, bw = "nrd",n =1024)
+PHILLY_time_est2$bw
+lines(PHILLY_time_est2, col = "violet", lwd = 1.5 )
+
+#UCV
+PHILLY_time_est3 <- density (times_PHILLY, bw = "ucv",n =1024)
+PHILLY_time_est3$bw
+lines(PHILLY_time_est3, col = "steelblue1", lwd = 1.5 )
+
+#BCV
+PHILLY_time_est4 <- density (times_PHILLY, bw = "bcv",n =1024)
+PHILLY_time_est4$bw
+lines(PHILLY_time_est4, col ="royalblue3", lwd = 1.5 )
+
+#SJ
+PHILLY_time_est5 <- density (times_PHILLY, bw = "SJ",n =1024)
+PHILLY_time_est5$bw
+lines(PHILLY_time_est5, col = "orchid", lwd = 1.5 )
+
+legend(-4000, 5.8*10^(-5), legend = c("NRD0", "NRD", "UCV", "BCV", "SJ"), col = c("slateblue1", "violet", "steelblue1", "royalblue3","orchid"), lty = 1, cex = 0.75)
+```
+
+Location bandwidth estimates: 
+```{r}
+X_min_PHILLY <- min(data_PHILLY$X)
+X_max_PHILLY <- max(data_PHILLY$X)
+Y_min_PHILLY <- min(data_PHILLY$Y)
+Y_max_PHILLY <- max(data_PHILLY$Y)
+
+loc_PHILLY <- SpatialPoints(cbind(data_PHILLY$X, data_PHILLY$Y))
+loc_PHILLY_ppp <- as.ppp(as.data.frame(loc_PHILLY), c(X_min_PHILLY, X_max_PHILLY, Y_min_PHILLY, Y_max_PHILLY))
+
+#Diggle
+PHILLY_loc_est1 <- bw.diggle(loc_PHILLY_ppp)
+PHILLY_loc_est1
+
+#ppl
+PHILLY_loc_est2 <- bw.ppl(loc_PHILLY_ppp)
+PHILLY_loc_est2
+
+#scott
+PHILLY_loc_est3 <- bw.scott(loc_PHILLY_ppp)
+PHILLY_loc_est3
+
+#CvL
+PHILLY_loc_est4 <- bw.CvL(loc_PHILLY_ppp)
+PHILLY_loc_est4
+```
+
+**Denver: incidents data 2016-2018** (with duplicates)
+
+```{r}
+data_DEN <- readRDS(here("gun_shootings_multicity/data/ready_for_modeling/denver_incidents_2016-2018_dups_with_holidays.rds"))
+```
+We notice it is much smaller than the previous data sets. 
+
+Bandwidth estimations for times: 
+```{r}
+times_DEN <- data.matrix(data_DEN$Time)
+
+#NRD0
+DEN_time_est1 <- density (times_DEN, n =1024)
+DEN_time_est1$bw
+plot(DEN_time_est1, col = "slateblue1", lwd = 1.5, ylim = c(0, 6*10^(-5)), main = "Kernel Density Estimation- Denver", xlab = "Observation" )
+
+#NRD
+DEN_time_est2 <- density (times_DEN, bw = "nrd",n =1024)
+DEN_time_est2$bw
+lines(DEN_time_est2, col = "violet", lwd = 1.5 )
+
+#UCV
+DEN_time_est3 <- density (times_DEN, bw = "ucv",n =1024)
+DEN_time_est3$bw
+lines(DEN_time_est3, col = "steelblue1", lwd = 1.5 )
+
+#BCV
+DEN_time_est4 <- density (times_DEN, bw = "bcv",n =1024)
+DEN_time_est4$bw
+lines(DEN_time_est4, col ="royalblue3", lwd = 1.5 )
+
+#SJ
+DEN_time_est5 <- density (times_DEN, bw = "SJ",n =1024)
+DEN_time_est5$bw
+lines(DEN_time_est5, col = "orchid", lwd = 1.5 )
+
+legend(-4000, 5.8*10^(-5), legend = c("NRD0", "NRD", "UCV", "BCV", "SJ"), col = c("slateblue1", "violet", "steelblue1", "royalblue3","orchid"), lty = 1, cex = 0.75)
+```
+
+Bandwidth estimation for locations: 
+```{r}
+X_min_DEN <- min(data_DEN$X)
+X_max_DEN <- max(data_DEN$X)
+Y_min_DEN <- min(data_DEN$Y)
+Y_max_DEN <- max(data_DEN$Y)
+
+loc_DEN <- SpatialPoints(cbind(data_DEN$X, data_DEN$Y))
+loc_DEN_ppp <- as.ppp(as.data.frame(loc_DEN), c(X_min_DEN, X_max_DEN, Y_min_DEN, Y_max_DEN))
+
+#Diggle
+DEN_loc_est1 <- bw.diggle(loc_DEN_ppp)
+DEN_loc_est1
+
+#ppl
+DEN_loc_est2 <- bw.ppl(loc_DEN_ppp)
+DEN_loc_est2
+
+#scott
+DEN_loc_est3 <- bw.scott(loc_DEN_ppp)
+DEN_loc_est3
+
+#CvL
+DEN_loc_est4 <- bw.CvL(loc_DEN_ppp)
+DEN_loc_est4
+```
 
