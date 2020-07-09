@@ -359,7 +359,7 @@ PHILLY_loc_est4
 **Denver: incidents data 2016-2018** (with duplicates)
 
 ```{r}
-data_DEN <- readRDS(here("gun_shootings_multicity/data/ready_for_modeling/denver_incidents_2016-2018_dups_with_holidays.rds"))
+data_DEN <- readRDS(here("gun_shootings_multicity/data/ready_for_modeling/denver_incidents_2016-2018_no_dups_with_holidays.rds"))
 ```
 We notice it is much smaller than the previous data sets. 
 
@@ -462,14 +462,14 @@ loc_df_noCvL %>%
   geom_bar(position = "dodge", stat = "identity") +
   theme_bw() + 
   scale_fill_brewer(palette = "RdPu") +
-  labs(title = "Bandwidth Estimates for Location", x= "", y= "Bandwith Estimate", fill = "Method") +
+  labs(title = "Bandwidth Estimates for Location", x= "", y= "Bandwith Estimate (km)", fill = "Method") +
   theme(plot.title = element_text(hjust = 0.5))
 
 data.frame("City" = loc_df$City, "CvL"= loc_df$CvL)  %>%
   ggplot (aes(x= City, y = CvL)) +
   geom_bar(position = "dodge", stat = "identity", fill = brewer.pal(n = 4, name= "RdPu")[3]) +
   theme_bw()+
-  labs(title ="Bandwidth Estimates for Location with CvL method", x = "", y = "Bandwidth Estimate")+
+  labs(title ="Bandwidth Estimates for Location with CvL method", x = "", y = "Bandwidth Estimate (km)")+
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
