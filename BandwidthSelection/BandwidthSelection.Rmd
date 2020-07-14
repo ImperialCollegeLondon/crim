@@ -42,7 +42,7 @@ times_WDC <- data.matrix(data_WDC$Time)
 #NRD0
 WDC_time_est1 <- density (times_WDC, n =1024)
 WDC_time_est1$bw
-plot(WDC_time_est1, col = "slateblue1", lwd = 1.5, ylim = c(0, 6*10^(-5)), main = "Kernel Density Estimation- Washington DC", xlab = "Observation" )
+plot(WDC_time_est1, col = "slateblue1", lwd = 1.5, ylim = c(0, 6*10^(-5)), main = "Kernel Density Estimation- Washington DC", xlab = "Time (h)" )
 
 #NRD
 WDC_time_est2 <- density (times_WDC, bw = "nrd",n =1024)
@@ -110,7 +110,7 @@ times_CHI <- data.matrix(data_CHI$Time)
 #NRD0
 CHI_time_est1 <- density (times_CHI, n =1024)
 CHI_time_est1$bw
-plot(CHI_time_est1, col = "slateblue1", lwd = 1.5, ylim = c(0, 6*10^(-5)), main = "Kernel Density Estimation- Chicago", xlab = "Observation" )
+plot(CHI_time_est1, col = "slateblue1", lwd = 1.5, ylim = c(0, 6*10^(-5)), main = "Kernel Density Estimation- Chicago", xlab = "Time (h)" )
 
 #NRD
 CHI_time_est2 <- density (times_CHI, bw = "nrd",n =1024)
@@ -176,7 +176,7 @@ times_LA <- data.matrix(data_LA$Time)
 #NRD0
 LA_time_est1 <- density (times_LA, n =1024)
 LA_time_est1$bw
-plot(LA_time_est1, col = "slateblue1", lwd = 1.5, ylim = c(0, 6*10^(-5)), main = "Kernel Density Estimation- Los Angeles", xlab = "Observation" )
+plot(LA_time_est1, col = "slateblue1", lwd = 1.5, ylim = c(0, 6*10^(-5)), main = "Kernel Density Estimation- Los Angeles", xlab = "Time (h)" )
 
 #NRD
 LA_time_est2 <- density (times_LA, bw = "nrd",n =1024)
@@ -241,7 +241,7 @@ times_NYC <- data.matrix(data_NYC$Time)
 #NRD0
 NYC_time_est1 <- density (times_NYC, n =1024)
 NYC_time_est1$bw
-plot(NYC_time_est1, col = "slateblue1", lwd = 1.5, ylim = c(0, 6*10^(-5)), main = "Kernel Density Estimation- New York City", xlab = "Observation" )
+plot(NYC_time_est1, col = "slateblue1", lwd = 1.5, ylim = c(0, 6*10^(-5)), main = "Kernel Density Estimation- New York City", xlab = "Time (h)")
 
 #NRD
 NYC_time_est2 <- density (times_NYC, bw = "nrd",n =1024)
@@ -304,7 +304,7 @@ times_PHILLY <- data.matrix(data_PHILLY$Time)
 #NRD0
 PHILLY_time_est1 <- density (times_PHILLY, n =1024)
 PHILLY_time_est1$bw
-plot(PHILLY_time_est1, col = "slateblue1", lwd = 1.5, ylim = c(0, 6*10^(-5)), main = "Kernel Density Estimation- Philadelphia", xlab = "Observation" )
+plot(PHILLY_time_est1, col = "slateblue1", lwd = 1.5, ylim = c(0, 6*10^(-5)), main = "Kernel Density Estimation- Philadelphia", xlab = "Time (h)" )
 
 #NRD
 PHILLY_time_est2 <- density (times_PHILLY, bw = "nrd",n =1024)
@@ -370,7 +370,7 @@ times_DEN <- data.matrix(data_DEN$Time)
 #NRD0
 DEN_time_est1 <- density (times_DEN, n =1024)
 DEN_time_est1$bw
-plot(DEN_time_est1, col = "slateblue1", lwd = 1.5, ylim = c(0, 6*10^(-5)), main = "Kernel Density Estimation- Denver", xlab = "Observation" )
+plot(DEN_time_est1, col = "slateblue1", lwd = 1.5, ylim = c(0, 6*10^(-5)), main = "Kernel Density Estimation- Denver", xlab = "Time (h)" )
 
 #NRD
 DEN_time_est2 <- density (times_DEN, bw = "nrd",n =1024)
