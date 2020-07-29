@@ -1,6 +1,8 @@
 ---
 title: "BandwidthSelection_with_functions"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -8,17 +10,13 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 ```{r}
 getwd()
 library(here)
 here()
 ```
 
-Load the packages used for bandwidth selection
+Load the packages used for bandwidth selection:
 ```{r}
 library(spatstat)
 library(spatstat.data)
@@ -28,47 +26,45 @@ library (sp)
 library(MASS)
 ```
 
+
 Load the packages for visuals 
 ```{r}
 library(ggplot2)
 library(dplyr)
 library (tidyr)
 library(RColorBrewer)
+library(gridExtra)
+library(grid)
 ```
+<br/><br/>
+
 In the whole document, we use the data with holidays as it has been noticed that the surges in holidays mostly occured in AGLS data (fireworks, celebratory gunshots) rather than corresponding to an actual higher number of assaults.
 
 We start by loading the data for each of the cities:
 ```{r}
-data_WDC <- readRDS(here("gun_shootings_multicity/data/ready_for_modeling/washington_incidents_2016-2018_with_holidays.rds"))
-
-data_CHI <- readRDS(here("gun_shootings_multicity/data/ready_for_modeling/chicago_incidents_2016-2018_with_holidays.rds"))
-
-data_LA <- readRDS(here("gun_shootings_multicity/data/ready_for_modeling/losangeles_incidents_2016-2018_with_holidays.rds"))
-
-data_NYC <- readRDS(here("gun_shootings_multicity/data/ready_for_modeling/nyc_incidents_2016-2018_with_holidays.rds"))
-
-data_PHILLY <- readRDS(here("gun_shootings_multicity/data/ready_for_modeling/philadelphia_incidents_2016-2018_with_holidays.rds"))
-
-data_DEN <- readRDS(here("gun_shootings_multicity/data/ready_for_modeling/denver_incidents_2016-2018_no_dups_with_holidays.rds"))
-
-data_BALT <- readRDS(here("gun_shootings_multicity/data/ready_for_modeling/baltimore_incidents_2016-2018_with_holidays.rds"))
-
-data_BOS <- readRDS(here("gun_shootings_multicity/data/ready_for_modeling/boston_incidents_2016-2018_with_holidays.rds"))
-
-data_MIL <- readRDS(here("gun_shootings_multicity/data/ready_for_modeling/milwaukee_incidents_2016-2018_no_dups_with_holidays.rds"))
-
-data_SEAT <- readRDS(here("gun_shootings_multicity/data/ready_for_modeling/seattle_incidents_2016-2018_no_dups_with_holidays.rds"))
-
+data_WDC <- readRDS(here("data/ready_for_modeling/washington_incidents_2016-2018_with_holidays.rds"))
+data_CHI <- readRDS(here("data/ready_for_modeling/chicago_incidents_2016-2018_with_holidays.rds"))
+data_LA <- readRDS(here("data/ready_for_modeling/losangeles_incidents_2016-2018_with_holidays.rds"))
+data_NYC <- readRDS(here("data/ready_for_modeling/nyc_incidents_2016-2018_with_holidays.rds"))
+data_PHILLY <- readRDS(here("data/ready_for_modeling/philadelphia_incidents_2016-2018_with_holidays.rds"))
+data_DEN <- readRDS(here("data/ready_for_modeling/denver_incidents_2016-2018_no_dups_with_holidays.rds"))
+data_BALT <- readRDS(here("data/ready_for_modeling/baltimore_incidents_2016-2018_with_holidays.rds"))
+data_BOS <- readRDS(here("data/ready_for_modeling/boston_incidents_2016-2018_with_holidays.rds"))
+data_MIL <- readRDS(here("data/ready_for_modeling/milwaukee_incidents_2016-2018_no_dups_with_holidays.rds"))
+data_SEAT <- readRDS(here("data/ready_for_modeling/seattle_incidents_2016-2018_no_dups_with_holidays.rds"))
+data_KAN <- readRDS(here("data/ready_for_modeling/kansascity_incidents_2016-2018_with_holidays.rds"))
 ```
 
-We now create a function that will compute the density estimates for times.
+<br/>
+We now create a function that compute & plot the density estimates for times.
+Note that we can try different kernels in the 'density' function by specifying e.g. kernel=biweight.
 ```{r}
 times_KDE <- function(data, city_name){
   times<- data.matrix(data$Time)
-
+  
   #NRD0
   est1 <- density (times, n =1024)
-  plot(est1, col = "slateblue1", lwd = 1.5, ylim = c(0, 6*10^(-5)), main = paste("Kernel Density Estimation", city_name), xlab = "Time (h)" )
+  plot(est1, col = "deeppink3", lwd = 1.5, ylim = c(0, 6*10^(-5)), main = paste("Kernel Density Estimation", city_name), xlab = "Time (h)" )
   
   #NRD
   est2 <- density (times, bw = "nrd",n =1024)
@@ -76,26 +72,24 @@ times_KDE <- function(data, city_name){
   
   #UCV
   est3 <- density (times, bw = "ucv",n =1024)
-  lines(est3, col = "steelblue1", lwd = 1.5 )
+  lines(est3, col = "snow4", lwd = 1.5 )
   
   #BCV
   est4 <- density (times, bw = "bcv",n =1024)
-  lines(est4, col ="royalblue3", lwd = 1.5 )
+  lines(est4, col ="skyblue2", lwd = 1.5 )
   
   #SJ
   est5 <- density (times, bw = "SJ",n =1024)
-  lines(est5, col = "orchid4", lwd = 1.5 )
+  lines(est5, col = "dodgerblue", lwd = 1.5 )
   
-  legend(-5000, 5.5*10^(-5), legend = c("NRD0", "NRD", "UCV", "BCV", "SJ"), col = c("slateblue1", "violet", "steelblue1", "royalblue3","orchid4"), lty = 1, cex = 0.75)
+  legend(-5000, 5.5*10^(-5), legend = c("NRD0", "NRD", "UCV", "BCV", "SJ"), col = c("deeppink3", "violet", "snow4", "skyblue2","dodgerblue"), lty = 1, cex = 0.75)
   
   return(c(est1$bw, est2$bw, est3$bw, est4$bw, est5$bw))
-    
 }
 ```
 
-
+<br/>
 We run this function on the different cities:
-
 ```{r}
 WDC_times_bw <- times_KDE(data_WDC, "Washington DC")
 CHI_times_bw <- times_KDE(data_CHI, "Chicago")
@@ -107,58 +101,89 @@ BALT_times_bw <- times_KDE(data_BALT, "Baltimore")
 BOS_times_bw <- times_KDE(data_BOS, "Boston")
 MIL_times_bw <- times_KDE(data_MIL, "Milwaukee")
 SEAT_times_bw <- times_KDE(data_SEAT, "Seattle")
+KAN_times_bw <- times_KDE(data_KAN, "Kansas City")
 ```
 
-Looking at those plots, we see that UCV is very clearly overfitting. 
-Then we see that SJ and BCV, NRD0 and NRD pairwise give practically identical results.
-NRD and NRD0 give the smoothest lines, which based on our prior knowledge seems to be what we would be interested in. Indeeed, we would most want to see the major peaks but some of the extra oscillations we get with SJ and BCV seem to rather again be a source of overfitting.
 
-However, NRD and NRD0 make parametric assumptions- indeed the method behind it assumes a Gaussian model, which is not necessarily appropriate. Through its simplicity, there is also a risk of oversmoothing. Indeed, in Silverman's book where it is introduced it says that if the population is multimodal rather than really normally distributed, oversmoothing is a common risk. 
+Looking at the plots, we see that:
 
-BCV and SJ are more computationally expensive, but considering the size of our data sets it is not an issue. IN most plots, BCV and SJ either give a very similar density, or BCV gives a slightly smoother one, so if one was to make a choice of method, BCV seems like the most appropriate one.
+UCV is very clearly overfitting for most cities, despite for Denver and Seattle.
 
-We note that these methods all use a Gaussian kernel functions. It could also be interesting to experiment with other kernels.
+SJ and BCV, NRD0 and NRD pairwise give practically identical results.
 
-We now want to generate some plots in Tidyverse.
-We create the data frames that will be used for visualization. We start with times:
+NRD and NRD0 give the smoothest lines, which seems to be what we are interested in. Indeed, we would most want to see the major peaks but some of the extra oscillations we get with SJ and BCV seem to rather again be a source of overfitting.
+
+However, NRD and NRD0 make parametric assumptions - the method behind it assumes a Gaussian model, which is not necessarily appropriate. Through its simplicity, there is also a risk of oversmoothing. Indeed, in Silverman's book it says that if the population is multimodal rather than really normally distributed, oversmoothing is a common risk. 
+
+BCV and SJ are more computationally expensive, but considering the size of our data sets it is not an issue. In most plots, BCV and SJ either give a very similar density, or BCV gives a slightly smoother one, so if one was to make a choice of method, BCV seems like the most appropriate one.
+
+-------
+Note that for Denver, Milwaukee and Seattle, we used the data without duplicates. For the data with duplicates, the density estimates are more wiggly across all methods, and the bandwidth estimates are lower.
+
+Here we assumes a Gaussian kernel. Most of the other kernels give similar density estimates, in particular:
+-	the epanechnikov kernel gives only slightly more wiggly estimates for all methods;
+-	the cosine kernel and the biweight kernal give slightly smoother estimates, especially for UCV;
+-	the rectanglar kernel gives much more wiggly estimates, which may impliy overfitting.
+
+
+
+
+
+<br/><br/><br/><br/>
+We now generate some plots in Tidyverse.
+First create the dataframe that will be used for visualization. We start with times:
 
 ```{r}
-times_df <- data.frame("City" = c("NRD0", "NRD", "UCV", "BCV", "SJ"),
-                        "Washington DC" = WDC_times_bw,
-                       "Chicago" = CHI_times_bw,
-                       "Los Angeles"= LA_times_bw,
-                       "New York City"= NYC_times_bw,
-                       "Philadelphia" = PHILLY_times_bw,
-                       "Denver" = DEN_times_bw,
-                       "Baltimore" = BALT_times_bw,
-                       "Boston" = BOS_times_bw,
-                       "Milwaukee"= MIL_times_bw,
-                       "Seattle" = SEAT_times_bw)
+times_df <- data.frame("City" = c("4.NRD0", "5.NRD", "1.UCV", "3.BCV", "2.SJ"),"Washington DC" = WDC_times_bw,"Chicago" = CHI_times_bw, "Los Angeles"= LA_times_bw,"New York City"= NYC_times_bw,"Philadelphia" = PHILLY_times_bw,"Denver" = DEN_times_bw,"Baltimore" = BALT_times_bw,"Boston" = BOS_times_bw,"Milwaukee"= MIL_times_bw,"Seattle" = SEAT_times_bw,"Kansas City" = KAN_times_bw)
 
 col_name<- times_df$City
 times_df <- as.data.frame(t(times_df[,-1]))
 colnames(times_df) <- col_name
 times_df <- cbind("City" = rownames(times_df), times_df)
 rownames(times_df) <- 1:nrow(times_df)
+times_df_means <-data.frame(City=times_df[,1],UCV=times_df[,4],Means=rowMeans(times_df[,-1]))
 times_df$City <- gsub("\\.", " ", times_df$City)
 ```
 
-We now proceed to generating some barplots. We start with the time bandwidth. 
+<br/>
+We now generate some barplots for visualising temporal lengthscale:
 ```{r}
 times_df %>%
   gather("Type", "Value",-City) %>%
-  mutate("Days" = Value /24) %>%
-  ggplot(aes(City, Days, fill = Type)) +
+  mutate("Days" = Value/24) %>%
+  ggplot(aes(reorder(City,Days),Days,fill = Type)) +
   geom_bar(position = "dodge", stat = "identity") +
   theme_bw() + 
-  scale_fill_brewer(palette = "RdPu") +
-  theme(axis.text.x = element_text(size = 6)) +  
+  scale_fill_brewer(palette = "Spectral") +
+  scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140))+
+  theme(axis.text.y = element_text(size = 8)) +  
   labs(title = "Bandwidth Estimates for Time", x= " ", y= "Bandwith Estimate (Days)", fill = "Method") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+#generate a barplot for the mean bandwidth estimates & UCV estimates (which give the smallest estimates, could be a good indicator for a lower bound)
+times_df_means %>%
+  gather("Type", "Value",-City) %>%
+  mutate("Days" = Value/24) %>%
+  ggplot(aes(reorder(City,Days),Days,fill = Type)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  theme_bw() +
+  scale_fill_brewer(palette = "Spectral") +
+  scale_y_continuous(breaks = c(0,20,40,60,80,100))+
+  geom_text(aes(label=round(Days,digits=1)),size=4,position=position_dodge(width=0.9),vjust=-0.25)+
+  theme(axis.text.y = element_text(size = 10)) +  
+  labs(title = "Mean Bandwidth Estimates for Time", x= " ", y= "Mean Bandwith Estimate (Days)", fill = "Method") +
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
+From these barplots, we see that:
+The five methods show consistency over cities, despite for Seattle.
+For the five methods, the relative lengths of the estimated bandwidths are corresponding to the smoothness of their density estimates. 
 
-Now, we proceed to creating th function for the spatial lengthscale.
+
+
+<br/><br/><br/><br/>
+Now we proceed to create the function for the spatial lengthscale:
 ```{r}
 spatial_KDE <- function(data){
   X_min <- min(data$X)
@@ -172,10 +197,10 @@ spatial_KDE <- function(data){
   #Diggle
   est1 <- bw.diggle(loc_ppp)
   
-  #ppl
+  #PPL
   est2 <- bw.ppl(loc_ppp)
   
-  #scott
+  #Scott
   est3 <- bw.scott(loc_ppp)
   
   #CvL
@@ -185,7 +210,8 @@ spatial_KDE <- function(data){
 }
 ```
 
-We run the function on the data for the different cities:
+<br/>
+We run the function on different cities:
 ```{r}
 WDC_spatial_bw <- spatial_KDE(data_WDC)
 CHI_spatial_bw <- spatial_KDE(data_CHI)
@@ -197,29 +223,68 @@ BALT_spatial_bw <- spatial_KDE(data_BALT)
 BOS_spatial_bw <- spatial_KDE(data_BOS)
 MIL_spatial_bw <- spatial_KDE(data_MIL)
 SEAT_spatial_bw <- spatial_KDE(data_SEAT)
+KAN_spatial_bw <- spatial_KDE(data_KAN)
 ```
 
-We want draw it for all the cities, but we'll show some images of the density obtained with the different bandwidths.
+<br/>
+We create a function that plot 2d density estimates using the four selection methods.
+Note that here we uses the 'stat_density2d' function, which uses a bivariate normal kernel.
+
 ```{r}
-plotting_grid <- function(data, bw, city_name) {
-  spat_dens1 <- kde2d(data$X , data$Y, h = bw[1], n =100)
-  spat_dens2 <- kde2d(data$X , data$Y, h = bw[2], n =100)
-  spat_dens3 <- kde2d(data$X , data$Y, h = c(as.numeric(bw[3]),as.numeric(bw[4])), n =100)
-  spat_dens4 <- kde2d(data$X , data$Y, h = bw[5], n =100)
+plotting_grid <- function(data, bw,city_name) {
+  X<-data$X
+  Y<-data$Y
   
-  par(mfrow = c(2,2), pty = "s", mar = c(8, 8, 8, 8))
-  image(spat_dens1, xlab = "X (km)", ylab = "Y (km)", main= "Density Plot with Diggle", asp =1, cex.main =2, cex.lab= 2)
-  image(spat_dens2, xlab = "X (km)", ylab = "Y (km)", main = "Density Plot with PPL", asp =1, cex.main =2, cex.lab= 2)
-  image(spat_dens3, xlab = "X (km)", ylab = "Y (km)", main = "Density Plot with Scott", asp =1, cex.main =2, cex.lab= 2)
-  image(spat_dens4, xlab = "X (km)", ylab = "Y (km)", main = "Density Plot with CvL", asp =1,cex.main =2, cex.lab= 2)
+  d1<-ggplot(data, aes(x = X, y = Y)) + 
+    xlab('X (km)') + 
+    ylab('Y (km)') + 
+    stat_density2d(aes(fill = ..level..), alpha = .5, h = bw[1], n =100,
+                   geom = "polygon", data = data) + 
+    coord_cartesian(xlim = c(0,max(X)), 
+                     ylim = c(0,max(Y)))+
+    scale_fill_viridis_c()+
+    labs(title = "Diggle")
   
-  mtext(paste("Kernel Density Estimation for", city_name), outer = TRUE, cex = 2.5, side = 3, line =-2)
+    
+  d2<-ggplot(data, aes(x = X, y = Y)) + 
+    xlab('X (km)') + 
+    ylab('Y (km)') + 
+    stat_density2d(aes(fill = ..level..), alpha = .5, h = bw[2], n =100,
+                   geom = "polygon", data = data) + 
+    coord_cartesian(xlim = c(0,max(X)), 
+                    ylim = c(0,max(Y)))+
+    scale_fill_viridis_c()+
+    labs(title = "PPL")
+
+  
+  d3<-ggplot(data, aes(x = X, y = Y)) + 
+  xlab('X (km)') + 
+  ylab('Y (km)') + 
+  stat_density2d(aes(fill = ..level..), alpha = .5, h = c(as.numeric(bw[3]),as.numeric(bw[4])), n =100,
+                 geom = "polygon", data = data) + 
+  coord_cartesian(xlim = c(0,max(X)), 
+                    ylim = c(0,max(Y)))+
+  scale_fill_viridis_c()+
+  labs(title = "Scott",hjust=0.5)
+  
+  
+  d4<-ggplot(data, aes(x = X, y = Y)) + 
+    xlab('X (km)') + 
+    ylab('Y (km)') + 
+    stat_density2d(aes(fill = ..level..), alpha = .5, h = bw[5], n =100,
+                   geom = "polygon", data = data) + 
+    coord_cartesian(xlim = c(0,max(X)), 
+                    ylim = c(0,max(Y))) +
+    scale_fill_viridis_c()+
+    labs(title = "CvL")
+  
+    
+  grid.arrange(d1,d2,d3,d4,nrow=2,top = textGrob(paste("Kernel Density Estimation", city_name),gp=gpar(fontsize=16,font=8)))
 
 }
-```
 
 
-```{r Fig1, echo=TRUE, fig.height=8, fig.width=8}
+
 plotting_grid(data_WDC, WDC_spatial_bw, "Washington DC")
 plotting_grid(data_CHI, CHI_spatial_bw, "Chicago")
 plotting_grid(data_LA, LA_spatial_bw, "Los Angeles")
@@ -230,12 +295,22 @@ plotting_grid(data_BALT, BALT_spatial_bw, "Baltimore")
 plotting_grid(data_BOS, BOS_spatial_bw, "Boston")
 plotting_grid(data_MIL, MIL_spatial_bw, "Milwaukee")
 plotting_grid(data_SEAT, SEAT_spatial_bw, "Seattle")
-
+plotting_grid(data_KAN, KAN_spatial_bw, "Kansas City")
 ```
 
+<br/>
+Looking at these plots, we can see that:
+  
+For all cities, CvL gives the smoothest density estimates, followed by Scott, PPL and Diggle.
 
-In the same way as we did with the temporal bandwidth, we now create a dataframe to obtain histograms comparing the methods for the different cities. 
+Diggle gives extremely wiggly 2d density estimates, which may imply significant overfitting, so it may not a desirable method to use. CvL gives the smoothest density estimates, which may imply underfitting.
 
+
+
+
+
+<br/><br/><br/><br/>
+In the same way as we did with the temporal bandwidth, we now create a dataframe to obtain histograms comparing the methods for the different cities:
 ```{r}
 spat_df <- data.frame("City" = c("Diggle", "PPL", "Scott X", "Scott Y", "CvL"),
                       "Washington DC" = WDC_spatial_bw,
@@ -247,74 +322,114 @@ spat_df <- data.frame("City" = c("Diggle", "PPL", "Scott X", "Scott Y", "CvL"),
                        "Baltimore" = BALT_spatial_bw,
                        "Boston" = BOS_spatial_bw,
                        "Milwaukee"= MIL_spatial_bw,
-                       "Seattle" = SEAT_spatial_bw)
+                       "Seattle" = SEAT_spatial_bw,
+                       "Kansas City" = KAN_spatial_bw)
+
 col_name<- spat_df$City
 spat_df <- as.data.frame(t(spat_df[,-1]))
 colnames(spat_df) <- col_name
 spat_df <- cbind("City"= rownames(spat_df), spat_df)
 rownames(spat_df) <- 1:nrow(spat_df)
+spat_df_CvL<-data.frame("City" = spat_df$City,"CvL"= spat_df$CvL)
+spat_df_means <-data.frame(City=spat_df[,1], PPL=spat_df$PPL, Means=rowMeans(spat_df[,-1]))
 spat_df$City <- gsub("\\.", " ", spat_df$City)
 ```
 
-We continue with plotting the location bandwidth. We note that the Scott Estimate is divided into 2 bars corresponding to the X estimate and the Y estimate. Since CvL gives much larger values, we do not add it to the plot, and plot it in a separate histogram. 
+<br/><br/>
+We continue to plot the location bandwidth. We note that the Scott Estimate is divided into 2 bars corresponding to the X estimate and the Y estimate. Since CvL gives much larger values, we do not add it to the plot, and plot it in a separate histogram. 
 
 ```{r}
 spat_df_noCvL <- subset(spat_df, select = -CvL)
-spat_df_noCvL %>%
+No_CvL<-spat_df_noCvL %>%
   gather("Type", "Value",-City) %>%
-  ggplot(aes(City, Value, fill = Type)) +
+  ggplot(aes(reorder(City,Value), Value, fill = Type)) +
   geom_bar(position = "dodge", stat = "identity") +
   theme_bw() + 
-  theme(axis.text.x = element_text(size = 6)) +  
-  scale_fill_brewer(palette = "RdPu") +
+  theme(axis.text.x = element_text(size = 8)) +  
+  scale_fill_brewer(palette = "Spectral") +
+  scale_y_continuous(breaks = c(0,0.5,1,1.5,2,2.5,3))+
   labs(title = "Bandwidth Estimates for Location", x= "", y= "Bandwith Estimate (km)", fill = "Method") +
   theme(plot.title = element_text(hjust = 0.5))
 
-data.frame("City" = spat_df$City, "CvL"= spat_df$CvL)  %>%
-  ggplot (aes(x= City, y = CvL)) +
-  geom_bar(position = "dodge", stat = "identity", fill = brewer.pal(n = 4, name= "RdPu")[3]) +
+
+CvL<-spat_df_CvL %>%
+  gather("Type", "Value",-City) %>%
+  ggplot (aes(reorder(City,Value), Value,fill = Type)) +
+  geom_bar(position = "dodge", stat = "identity") +
   theme_bw()+
-  theme(axis.text.x = element_text(size = 6)) +  
-  labs(title ="Bandwidth Estimates for Location with CvL method", x = "", y = "Bandwidth Estimate (km)")+
+  theme(axis.text.x = element_text(size = 8)) +
+  scale_fill_brewer(palette = "YlOrRd")+
+  labs(title ="Bandwidth Estimates for Location with CvL method", x = "", y = "Bandwidth Estimate (km)", fill = "Method")+
+  theme(plot.title = element_text(hjust = 0.5))
+
+grid.arrange(No_CvL,CvL,nrow=2)
+
+
+
+#generate a barplot for the mean bandwidth estimates & PPL estimates (which gives reasonably small estimates, could be a good indicator for a lower bound)
+spat_df_means %>%
+  gather("Type", "Value",-City) %>%
+  ggplot(aes(reorder(City,c(1,9,10,7,8,6,2,3,5,4,11,12,20,21,18,19,17,13,14,16,15,22)),Value,fill = Type)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  theme_bw() +
+  scale_fill_brewer(palette = "Spectral") +
+  geom_text(aes(label=round(Value,digits=1)),size=4,position=position_dodge(width=0.9),vjust=-0.25)+
+  theme(axis.text.y = element_text(size = 10)) +  
+  labs(title = "Mean Bandwidth Estimates for Location", x= " ", y= "Mean Bandwith Estimate (km)", fill = "Method") +
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
-We notice that Diggle gives abnormally low values (overfit) and CvL abnormally high (underfit), so we discard those two options. PPL and Scott estimates of the bandwidth coule be coherent. As Scott gives a separate bandwidth for the X and Y data, we can notice the geography of the city. For example, for a city like Seattle which is longer than it is wide, the Y bandwidth estimate is much higher. This does give an extra amount of information that could be useful. 
+<br/>
+From the barplots, we see that:
 
-One disadvantage of Scott is that similarly to the NRD (Normal Reference Density), it is a rule of thumb plug-in method which assumes an underlying Normal Distribution. 
+The four methods show consistency over cities. Also for most cities, we have ScottY > ScottX, despite for Baltimore, Philadelphia and Denver.
 
-A rational choice would therefore be to favour the PPL method. However if we also consider the density plots obtained, we could be concerned by overfitting with PPL more than with Scott, as the plot could not be smooth enough. One should probably make a further analysis to make a final choice. 
+Regarding the methods, Diggle gives abnormally low values (overfit) and CvL abnormally high (underfit), so we discard those two options. Scott gives higher estimates of the bandwidth than PPL (and thus smoother estimates of the density). 
 
-We can proceed to a sanity check looking at linear relationships between our bandwidth estimates, and cities' geographical data. Since we are mainly interested in PPL and Scott, these are the ones we will look at. We collect cities area, length and width for that purpose. Need to check what the date encompasses.
+Scott gives a separate bandwidth for the X and Y, notice that it could be related to the geography of the city. For example, Seattle is longer than it is wide, and the Y bandwidth estimate is much higher.
 
-Notes
-Currently: no metropolitan area
-Width Chicago : not including Rosemont
-LA: including Long Beach
-NYC: including Staten Island
-Denver: not including airport
+One disadvantage of Scott is that similarly to the NRD, it is a rule of thumb plug-in method which assumes an underlying (independent multivariate) Normal distribution – so there could be again an over-smoothing risk.
+
+A rational choice would therefore be to favour the PPL method. However if we also consider the density plots, we could be concerned by overfitting with PPL more than with Scott. One should probably make a further analysis to make a final choice.
+
+--------
+Note that for Denver, Milwaukee and Seattle, we used the data with no duplicates. I also tried the data with duplicates, and found that the bandwidth estimates for Milwaukee are similar; the estimates for Denver are slightly lower for Scott, but higher for CvL; and the estimates for Seattle are slightly lower for all methods, despite CvL.
+
+
+
+
+
+<br/><br/><br/><br/>
+We can proceed to a sanity check, looking at linear relationships between the bandwidth estimates, and e.g. cities' geographical data, cities' gun shooting numbers etc.
+We collect cities’ surface area, length, width and gun shooting numbers (i.e. the number of datapoints) for that purpose.
 
 ```{r}
-city_geog <- data.frame("City"= c("Washington DC","Chicago","Los Angeles", "New York City", "Philadelphia", "Denver", "Baltimore", "Boston", "Milwaukee", "Seattle"),
-                        "Surface Area (km^2)"= c(177,606.1, 1302, 783.8, 367, 401.2, 239, 232.1, 250.7, 217),
-                        "Height (km)" = c(20.5, 41,68,45,29, 25,19.5,18,30,26),
-                        "Width (km)"= c(18,25.5,45,45,26,32,15.5,16.5,30,14.5))
+city_geog <- data.frame("City"= c("Washington DC","Chicago","Los Angeles", "New York City", "Philadelphia", "Denver", "Baltimore", "Boston", "Milwaukee", "Seattle","Kansas City"),
+                        "Surface Area (km^2)"= c(177,606.1, 1302, 783.8, 367, 401.2, 239, 232.1, 250.7, 217,826.1),
+                        "Length (km)" = c(20.5, 41,68,45,29, 25,19.5,18,30,26,58),
+                        "Width (km)"= c(18,25.5,45,45,26,32,15.5,16.5,30,14.5,28),
+                        "Gun shooting number"=c(2384,8584,6674,2540,7398,438,2425,528,1413,126,3725))
 
-```
-
-```{r}
-plot(city_geog$Surface.Area..km.2., spat_df$PPL, xlab = "City Surface Area (km^2)", ylab= "PPL Bandwidth Estimate", main ="Relationship between city surface area and PPL")
+plot(city_geog$Surface.Area..km.2., spat_df$PPL, xlab = "City Surface Area (km^2)", ylab= "PPL Bandwidth Estimate", main ="Relationship between City Surface Area and PPL bandwidth estimates")
 text(x= city_geog$Surface.Area..km.2., y=spat_df$PPL, labels=city_geog$City, cex=0.5, 
-     pos =c(4,4,2,4,4,4,4,1,4,4))
+     pos =c(4,4,2,4,4,4,4,1,4,4,4))
 
-plot(city_geog$Height..km., spat_df$`Scott Y`, xlab = "City Width (km)", ylab ="Scott Y Bandwidth Estimate", main = "Relationship between city height and Scott Y")
-text(city_geog$Height..km., spat_df$`Scott Y`, labels=city_geog$City, cex=0.5, 
-     pos =c(4,4,2,4,4,4,4,4,4,4))
+plot(city_geog$Length..km., spat_df$`Scott Y`, xlab = "City Length (km)", ylab ="Scott Y Bandwidth Estimate", main = "Relationship between City Length and Scott Y bandwidth estimates")
+text(city_geog$Length..km., spat_df$`Scott Y`, labels=city_geog$City, cex=0.5, 
+     pos =c(4,4,2,4,4,4,4,4,4,4,4))
 
-plot(city_geog$Width..km., spat_df$`Scott X`,xlab = "City Height (km)", ylab = "Scott X Bandwidth Estimate", main = "Relationshio between city width and Scott X")
-text(city_geog$Width..km., spat_df$`Scott X`,xlab = "City Height (km)", labels=city_geog$City, cex=0.5, 
-     pos =c(4,2,2,2,4,4,3,4,4,1))
+plot(city_geog$Width..km., spat_df$`Scott X`,xlab = "City Width (km)", ylab = "Scott X Bandwidth Estimate", main = "Relationship between City Width and Scott X bandwidth estimates")
+text(city_geog$Width..km., spat_df$`Scott X`,xlab = "City Width (km)", labels=city_geog$City, cex=0.5, 
+     pos =c(4,2,2,2,4,4,3,4,4,1,4))
+
+#plot the gun shooting number vs the bandwidth estimates of time (NRD0). Patterns are similar for other estimation methods for time
+plot(city_geog$Gun.shooting.number,(times_df[,2])/24, xlab = "Gun shooting number", ylab = "NRDO Bandwidth Estimates", main = "Relationship between Gun shooting numbers and Bandwidth for Time (NRDO)")
+text(city_geog$Gun.shooting.number, (times_df[,2])/24, xlab = "Gun shooting number", labels=city_geog$City, cex=0.5, 
+     pos =c(4,3,2,4,4,4,2,4,4,1,4))
+
+
+#plot the gun shooting density (number per unit area) vs the bandwidth estimates of time (NRD0). Patterns are similar for other estimation methods for time
+plot((city_geog$Gun.shooting.number)/(city_geog$Surface.Area..km.2.), (times_df[,2])/24, xlab = "Gun shooting number per unit area (km^2)", ylab = "NRDO Bandwidth Estimates", main = "Relationship between Gun shooting density and Bandwidth for Time (NRDO)")
+text((city_geog$Gun.shooting.number)/(city_geog$Surface.Area..km.2.), (times_df[,2])/24, xlab = "Gun shooting number", labels=city_geog$City, cex=0.5, 
+     pos =c(4,3,2,4,4,4,2,4,4,1,4))
 ```
-
-
-
