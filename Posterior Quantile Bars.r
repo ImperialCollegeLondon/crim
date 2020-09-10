@@ -60,6 +60,7 @@ return(data)
 }
 
 
+
 ####PLOTS SE WEIGHT####
 all_data <- CI(all_city, "se_weight")
 all_data$city = factor(all_data$city, levels = all_data$city[order(all_data$m[1:14])])
@@ -110,6 +111,7 @@ lq_p <- ggplot(lq_data,aes(m,city)) + theme_pubr() +
 
 all_p
 ggarrange(hq_p, lq_p, ncol = 2)
+
 
 
 
@@ -184,7 +186,7 @@ annotate_figure(bg_p, top = text_grob("Background Bandwidths", face = "bold", si
 
 
 
-#Either Frequentist or A Priori
+#Produce seperate plots for Frequentist and A Priori
 hq_bgt_p <- ggplot(hq_data_bgt[1:7],aes(m,city)) + theme_pubr() + 
   geom_linerange(aes(xmin=ll,xmax=hh,y=city,color = type),position = position_dodge(.3)) + 
   geom_linerange(aes(xmin=l,xmax=h,y=city, color = type),position = position_dodge(.3),size=1)+
@@ -240,6 +242,8 @@ lq_bgs_p <- ggplot(lq_data_bgs[1:7],aes(m,city)) + theme_pubr() +
 bg_p <- ggarrange(hq_bgt_p, lq_bgt_p, hq_bgs_p, lq_bgs_p,
                   ncol = 2, nrow=2, align = "hv")
 annotate_figure(bg_p, top = text_grob("Background Bandwidths", face = "bold", size = 20))
+
+
 
 
 ####SE BANDWIDTH####
@@ -312,7 +316,7 @@ annotate_figure(se_p, top = text_grob("Self-Exciting Bandwidths", face = "bold",
 
 
 
-#both Freq and A Prior for selective cities
+#both Frequentist and A Priori for selective cities
 hq_set_p <- ggplot(hq_data_set,aes(m,city)) + theme_pubr() + 
   geom_linerange(aes(xmin=ll,xmax=hh,y=city,color = type),position = position_dodge(.3)) + 
   geom_linerange(aes(xmin=l,xmax=h,y=city, color = type),position = position_dodge(.3),size=1)+
