@@ -50,7 +50,7 @@ parameters {
 
 transformed parameters {
   real ll[n];
-  //real lp;
+  real lp;
   ll = to_array_1d(mu0 + muST * mu);
   for(i in 2:n) { 
     //for(j in 1:(i-1)) {
