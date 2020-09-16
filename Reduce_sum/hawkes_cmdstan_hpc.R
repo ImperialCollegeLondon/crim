@@ -1,4 +1,4 @@
-setwd("~/gunshot-contagion/")
+#setwd("~/gunshot-contagion/")
 
 install.packages("tibble",repos = "http://cran.us.r-project.org")
 install.packages("rlang",repos = "http://cran.us.r-project.org")
