@@ -32,7 +32,7 @@ Options:
 --nonseparable
 --duplicates
 --bwTime bw-time [default: 14]
---model model [default: hawkes-model.stan]
+--model model [default: hawkes_reduce_sum.stan]
 ]' -> doc
 
 opts <- docopt(doc)
