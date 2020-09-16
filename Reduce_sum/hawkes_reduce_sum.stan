@@ -54,7 +54,7 @@ transformed parameters {
   ll = to_array_1d(mu0 + muST * mu);
   for(i in 2:n) { 
     //for(j in 1:(i-1)) {
-      ll[i] = a * lengthscaleT * lengthscaleT * dot_product(sub_row(exp(timeD),i,1,i-1), head(gaussian(spaceD[i,],lengthscaleS), i-1));
+      ll[i] = a * lengthscaleT * dot_product(sub_row(exp(timeD * lengthscaleT),i,1,i-1), head(gaussian(spaceD[i,],lengthscaleS), i-1));
       //ll[i] = ll[i] + (a * lengthscaleT * exp(timeD[i,j] * lengthscaleT) * gaussian(spaceD[i,j],lengthscaleS));
     }
   lp = reduce_sum(partial_sum_1,ll,1) - muSTintegral * mu - mu0 * space_window * time_window 
